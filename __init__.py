@@ -1,11 +1,10 @@
 import chanutils.torrent
-from chanutils import select_all, select_one, get_attr
-from chanutils import get_doc, post_doc, get_json
+from chanutils import select_all, select_one, get_attr, post_doc
+from chanutils import get_doc, get_json, series_season_episode
 from chanutils import get_text, get_text_content, replace_entity, byte_size
 from playitem import TorrentPlayItem, ShowMoreItem, PlayItemList
 
-#_SEARCH_URL = "https://eztv.ch/search/"
-_SEARCH_URL = "http://eztvapi.re/shows/1?keywords="
+_SEARCH_URL = "https://eztv.ch/search/"
 
 _FEEDLIST = [
   {'title':'Latest', 'url':'https://eztv.ch'},
@@ -33,9 +32,9 @@ def feed(idx):
     return _extract_html(doc)
 
 def search(q):
-  url = _SEARCH_URL + q
-  data = get_json(url)
-  return _extract_showlist(data)
+  payload = {'SearchString1':q, 'SearchString':'', 'search':'Search'}
+  doc = post_doc(_SEARCH_URL, payload)
+  return _extract_html(doc)
 
 def showmore(imdb_id):
   data = get_json('http://eztvapi.re/show/' + imdb_id)
@@ -50,7 +49,8 @@ def _extract_html(doc):
     img = '/img/icons/film.svg'
     el = select_one(l, 'a.magnet')
     url = get_attr(el, 'href')
-    results.add(TorrentPlayItem(title, img, url))
+    subs = series_season_episode(title)
+    results.add(TorrentPlayItem(title, img, url, subs=subs))
   return results
 
 def _extract_showlist(data):
@@ -69,11 +69,14 @@ def _extract_showlist(data):
 def _extract_show(data):
   results = PlayItemList()
   img = data['images']['poster']
+  series = data['title']
   rtree = data['episodes'] 
   for r in rtree:
     title = r['title']
     url = r['torrents']['0']['url']
     subtitle = "Season: " + str(r['season']) + ", Episode: " + str(r['episode'])
     synopsis = r['overview']
-    results.add(TorrentPlayItem(title, img, url, subtitle, synopsis))
+    subs = {'series':series, 'season':r['season'], 
+            'episode':r['episode']}
+    results.add(TorrentPlayItem(title, img, url, subtitle, synopsis, subs=subs))
   return results
