@@ -41,7 +41,7 @@ def showmore(imdb_id):
   return _extract_show(data)
 
 def _extract_html(doc):
-  rtree = select_all(doc, 'tr.forum_header_border')
+  rtree = select_all(doc, 'tr.header_brd')
   results = PlayItemList()
   for l in rtree:
     el = select_one(l, 'a.epinfo')
