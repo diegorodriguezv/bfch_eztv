@@ -41,7 +41,7 @@ def showmore(imdb_id):
   return _extract_show(data)
 
 def _extract_html(doc):
-  rtree = select_all(doc, 'tr.header_brd')
+  rtree = select_all(doc, 'tr.forum_header_border[name="hover"]')
   results = PlayItemList()
   for l in rtree:
     el = select_one(l, 'a.epinfo')
@@ -49,6 +49,8 @@ def _extract_html(doc):
     img = '/img/icons/film.svg'
     el = select_one(l, 'a.magnet')
     url = get_attr(el, 'href')
+    if url is None:
+      continue
     subs = series_season_episode(title)
     results.add(TorrentPlayItem(title, img, url, subs=subs))
   return results
