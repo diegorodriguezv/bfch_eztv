@@ -4,10 +4,10 @@ from chanutils import get_doc, get_json, series_season_episode
 from chanutils import get_text, get_text_content, replace_entity, byte_size
 from playitem import TorrentPlayItem, ShowMoreItem, PlayItemList
 
-_SEARCH_URL = "http://eztv.unblock.al/search/"
+_SEARCH_URL = "https://eztv.ag/search/"
 
 _FEEDLIST = [
-  {'title':'Latest', 'url':'http://eztv.unblock.al'},
+  {'title':'Latest', 'url':'https://eztv.ag'},
   {'title':'Popular', 'url':'http://eztvapi.re/shows/1'},
 ]
 
@@ -28,7 +28,7 @@ def feed(idx):
     data = get_json(_FEEDLIST[idx]['url'], proxy=True)
     return _extract_showlist(data)
   else:
-    doc = get_doc(_FEEDLIST[idx]['url'], proxy=True)
+    doc = get_doc(_FEEDLIST[idx]['url'], proxy=False)
     return _extract_html(doc)
 
 def search(q):
