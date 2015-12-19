@@ -4,11 +4,12 @@ from chanutils import get_doc, get_json, series_season_episode
 from chanutils import get_text, get_text_content, replace_entity, byte_size
 from playitem import TorrentPlayItem, ShowMoreItem, PlayItemList
 
-_SEARCH_URL = "https://eztv.ag/search/"
+_BASE_URL = "https://eztv.ag"
+_SEARCH_URL = _BASE_URL + "/search/"
 
 _FEEDLIST = [
   {'title':'Latest', 'url':'https://eztv.ag'},
-  {'title':'Popular', 'url':'http://eztvapi.re/shows/1'},
+  {'title':'All Shows', 'url':'https://eztv.ag/showlist/rating/'},
 ]
 
 def name():
@@ -24,11 +25,10 @@ def feedlist():
   return _FEEDLIST
 
 def feed(idx):
+  doc = get_doc(_FEEDLIST[idx]['url'], proxy=False)
   if idx > 0:
-    data = get_json(_FEEDLIST[idx]['url'], proxy=True)
-    return _extract_showlist(data)
+    return _extract_showlist(doc)
   else:
-    doc = get_doc(_FEEDLIST[idx]['url'], proxy=False)
     return _extract_html(doc)
 
 def search(q):
@@ -36,9 +36,24 @@ def search(q):
   doc = post_doc(_SEARCH_URL, payload)
   return _extract_html(doc)
 
-def showmore(imdb_id):
-  data = get_json('http://eztvapi.re/show/' + imdb_id, proxy=True)
-  return _extract_show(data)
+def showmore(show_url):
+  doc = get_doc(_BASE_URL + show_url, proxy=False)
+  Return _extract_html(doc)
+
+def _extract_showlist(doc):
+  rtree = select_all(doc, 'tr[name="hover"]')
+  img = None
+  results = PlayItemList()
+  for l in rtree:
+    el = select_one(l, 'a.thread_link')
+    title = get_text(el)
+    url = get_attr(el, 'href')
+    el = select_one(l, 'b')
+    rating = get_text(el)
+    subtitle = "Rating: " + rating
+    item = ShowMoreItem(title, img, url, subtitle)
+    results.add(item)
+  return results
 
 def _extract_html(doc):
   rtree = select_all(doc, 'tr.forum_header_border[name="hover"]')
@@ -53,19 +68,6 @@ def _extract_html(doc):
       continue
     subs = series_season_episode(title)
     results.add(TorrentPlayItem(title, img, url, subs=subs))
-  return results
-
-def _extract_showlist(data):
-  results = PlayItemList()
-  for r in data:
-    title = r['title']
-    img = r['images']['poster']
-    url = r['imdb_id']
-    subtitle = "Year: " + r['year'] + ", "
-    subtitle = subtitle + "Seasons: " + str(r['num_seasons']) + ", "
-    subtitle = subtitle + "Rating: " + str(r['rating']['percentage']) + "%"
-    synopsis = '<a target="_blank" href="http://www.imdb.com/title/' + r['imdb_id'] + '/">View on IMDB</a>'
-    results.add(ShowMoreItem(title, img, url, subtitle, synopsis))
   return results
 
 def _extract_show(data):
