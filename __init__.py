@@ -38,7 +38,7 @@ def search(q):
 
 def showmore(show_url):
   doc = get_doc(_BASE_URL + show_url, proxy=False)
-  Return _extract_html(doc)
+  return _extract_html(doc)
 
 def _extract_showlist(doc):
   rtree = select_all(doc, 'tr[name="hover"]')
