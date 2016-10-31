@@ -32,8 +32,8 @@ def feed(idx):
     return _extract_html(doc)
 
 def search(q):
-  payload = {'SearchString1':q, 'SearchString':'', 'search':'Search'}
-  doc = post_doc(_SEARCH_URL, payload)
+  q = q.replace(' ', '-')
+  doc = get_doc(_SEARCH_URL + q, proxy=False)
   return _extract_html(doc)
 
 def showmore(show_url):
