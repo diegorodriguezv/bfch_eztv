@@ -25,7 +25,7 @@ def feedlist():
   return _FEEDLIST
 
 def feed(idx):
-  doc = get_doc(_FEEDLIST[idx]['url'], proxy=False)
+  doc = get_doc(_FEEDLIST[idx]['url'], proxy=True)
   if idx > 0:
     return _extract_showlist(doc)
   else:
@@ -33,11 +33,11 @@ def feed(idx):
 
 def search(q):
   q = q.replace(' ', '-')
-  doc = get_doc(_SEARCH_URL + q, proxy=False)
+  doc = get_doc(_SEARCH_URL + q, proxy=True)
   return _extract_html(doc)
 
 def showmore(show_url):
-  doc = get_doc(_BASE_URL + show_url, proxy=False)
+  doc = get_doc(_BASE_URL + show_url, proxy=True)
   return _extract_html(doc)
 
 def _extract_showlist(doc):
