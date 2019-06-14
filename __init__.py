@@ -4,12 +4,12 @@ from chanutils import get_doc, get_json, series_season_episode
 from chanutils import get_text, get_text_content, replace_entity, byte_size
 from playitem import TorrentPlayItem, ShowMoreItem, PlayItemList
 
-_BASE_URL = "https://eztv.ag"
+_BASE_URL = "https://eztv.io"
 _SEARCH_URL = _BASE_URL + "/search/"
 
 _FEEDLIST = [
-  {'title':'Latest', 'url':'https://eztv.ag'},
-  {'title':'All Shows', 'url':'https://eztv.ag/showlist/rating/'},
+  {'title':'Latest', 'url':'https://eztv.io'},
+  {'title':'All Shows', 'url':'https://eztv.io/showlist/rating/'},
 ]
 
 def name():
@@ -19,13 +19,13 @@ def image():
   return 'icon.png'
 
 def description():
-  return "EZTV Torrents Channel (<a target='_blank' href='https://eztv.ch'>https://eztv.ch</a>)."
+  return "EZTV Torrents Channel (<a target='_blank' href='https://eztv.io'>https://eztv.io</a>)."
 
 def feedlist():
   return _FEEDLIST
 
 def feed(idx):
-  doc = get_doc(_FEEDLIST[idx]['url'], proxy=True)
+  doc = get_doc(_FEEDLIST[idx]['url'])
   if idx > 0:
     return _extract_showlist(doc)
   else:
@@ -33,11 +33,11 @@ def feed(idx):
 
 def search(q):
   q = q.replace(' ', '-')
-  doc = get_doc(_SEARCH_URL + q, proxy=True)
+  doc = get_doc(_SEARCH_URL + q)
   return _extract_html(doc)
 
 def showmore(show_url):
-  doc = get_doc(_BASE_URL + show_url, proxy=True)
+  doc = get_doc(_BASE_URL + show_url)
   return _extract_html(doc)
 
 def _extract_showlist(doc):
@@ -56,8 +56,24 @@ def _extract_showlist(doc):
   return results
 
 def _extract_html(doc):
-  rtree = select_all(doc, 'tr.forum_header_border[name="hover"]')
   results = PlayItemList()
+  result_list = _extract_list(doc)
+  # sort by seeds (removing dots and commas)
+  result_list.sort(key=lambda el: int(el['seeds'].translate(None, ".,")), reverse = True) 
+  for l in result_list:    
+    subtitle = _subtitle(l['size'], l['seeds'], l['released'])
+    results.add(TorrentPlayItem(l['title'], l['img'], l['url'], subtitle, subs=l['subs']))
+  return results
+
+def _subtitle(size, seeds, released):
+  subtitle = 'Size: ' + unicode(size)
+  subtitle = subtitle + ', Seeds: ' + unicode(seeds)
+  subtitle = subtitle + ', Released: ' + unicode(released)
+  return subtitle
+
+def _extract_list(doc):
+  rtree = select_all(doc, 'tr.forum_header_border[name="hover"]')
+  results = []
   for l in rtree:
     el = select_one(l, 'a.epinfo')
     title = get_text(el)
@@ -67,7 +83,23 @@ def _extract_html(doc):
     if url is None:
       continue
     subs = series_season_episode(title)
-    results.add(TorrentPlayItem(title, img, url, subs=subs))
+    tds = select_all(l, 'td')
+    seeds = get_text(select_one(tds[-1], 'font'))
+    if not seeds:
+      seeds = '0'
+    released = get_text(tds[-2])
+    size = get_text(tds[-3])
+    if not size:
+      size = 'NA'
+    result = {}
+    result['title'] = title
+    result['img'] = img
+    result['url'] = url
+    result['subs'] = subs
+    result['seeds'] = seeds
+    result['released'] = released
+    result['size'] = size
+    results.append(result)
   return results
 
 def _extract_show(data):

@@ -1,2 +1,2 @@
-# bf_kickass_torrents
-Kickass Torrents channel for BlissFlixx media server
+# bf_eztv
+eztv channel for BlissFlixx media server
